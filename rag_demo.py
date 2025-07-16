@@ -1,8 +1,9 @@
 import os
 from dotenv import load_dotenv
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain_chroma import Chroma
+from langchain_groq import ChatGroq
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.vectorstores import Chroma
 from langchain.chains import RetrievalQA
 from langchain.schema import Document
 
@@ -24,14 +25,14 @@ It was created by Guido van Rossum and first released in 1991.
 Python is widely used in web development, data science, artificial intelligence, and automation.
 The language emphasizes code readability and uses indentation to define code blocks.
 """,
-    
+
     "machine_learning.txt": """
 Machine learning is a subset of artificial intelligence that enables computers to learn from data.
 It involves algorithms that can identify patterns and make predictions without being explicitly programmed.
 Common types include supervised learning, unsupervised learning, and reinforcement learning.
 Popular applications include image recognition, natural language processing, and recommendation systems.
 """,
-    
+
     "rag_technology.txt": """
 RAG stands for Retrieval Augmented Generation.
 It is a technique that combines information retrieval with text generation.
@@ -74,7 +75,8 @@ print(f"Created {len(splits)} text chunks")
 
 # 4. EMBEDDINGS - Convert text to vectors
 print("\n4. Creating embeddings...")
-embeddings = OpenAIEmbeddings()
+embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+
 
 # 5. VECTOR STORE - Store embeddings in database
 print("\n5. Creating vector store...")
@@ -83,9 +85,12 @@ vectorstore = Chroma.from_documents(
     embedding=embeddings
 )
 
-# 6. LLM - Set up the language model
-print("\n6. Setting up LLM...")
-llm = ChatOpenAI(temperature=0.3, model_name="gpt-3.5-turbo")
+# 6. LLM - Set up the language model (Groq)
+print("\n6. Setting up LLM (Groq)...")
+llm = ChatGroq(
+    temperature=0.3,
+    model_name="llama3-8b-8192"  # or "llama3-70b-8192"
+)
 
 # 7. QA CHAIN - Connect everything together
 qa_chain = RetrievalQA.from_chain_type(
@@ -102,7 +107,7 @@ print("="*50)
 # Sample questions to try
 sample_questions = [
     "What is Python?",
-    "What is machine learning?", 
+    "What is machine learning?",
     "What does RAG stand for?",
     "Who created Python?",
     "What are types of machine learning?"
@@ -113,9 +118,9 @@ for i, q in enumerate(sample_questions, 1):
     print(f"{i}. {q}")
 
 while True:
-    question = input("\nQuestion: ")
+    question = input("\nQuestion (type 'quit' to exit): ")
     if question.lower() == 'quit':
         break
-    
+
     answer = qa_chain.invoke({"query": question})
     print(f"Answer: {answer['result']}")
